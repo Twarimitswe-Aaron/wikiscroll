@@ -1,14 +1,31 @@
 <script lang="ts">
     import { api } from '$lib/api/client';
     import EventCard from '$lib/components/EventCard.svelte';
+    import StoriesBar from '$lib/components/StoriesBar.svelte';
+    import StoryViewer from '$lib/components/StoryViewer.svelte';
     import { onMount } from 'svelte';
-    
+
     let events = $state<any[]>([]);
     let page = $state(0);
     let loading = $state(true);
     let hasNext = $state(true);
     let loadingMore = $state(false);
     let error = $state('');
+
+    // Story viewer state
+    let viewerOpen    = $state(false);
+    let viewerStories = $state<any[]>([]);
+    let viewerStart   = $state(0);
+
+    function openStory(stories: any[], index: number) {
+        viewerStories = stories;
+        viewerStart   = index;
+        viewerOpen    = true;
+    }
+
+    function closeStory() {
+        viewerOpen = false;
+    }
 
     async function loadFeed(isLoadMore = false) {
         if (!isLoadMore) {
@@ -17,16 +34,16 @@
         } else {
             loadingMore = true;
         }
-        
+
         try {
             const response = await api.get<{ events: any[], hasNext: boolean }>(`/feed?page=${page}&size=10`, { requireAuth: false });
-            
+
             if (isLoadMore) {
                 events = [...events, ...response.events];
             } else {
                 events = response.events;
             }
-            
+
             hasNext = response.hasNext;
             page++;
         } catch (err: unknown) {
@@ -41,10 +58,8 @@
         loadFeed();
     });
 
-    // Simple infinite scroll detector
     function handleScroll() {
         if (loading || loadingMore || !hasNext) return;
-        
         const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
         if (scrollTop + clientHeight >= scrollHeight - 200) {
             loadFeed(true);
@@ -54,7 +69,23 @@
 
 <svelte:window onscroll={handleScroll} />
 
+<!-- Full-screen story viewer overlay -->
+{#if viewerOpen}
+    <StoryViewer
+        stories={viewerStories}
+        startIndex={viewerStart}
+        onClose={closeStory}
+    />
+{/if}
+
 <div class="max-w-[470px] mx-auto py-2">
+
+    <!-- ── Stories bar (Today in History) ── -->
+    <div class="bg-white border border-gray-200 rounded-lg mb-4 overflow-hidden">
+        <StoriesBar onStoryOpen={openStory} />
+    </div>
+
+    <!-- ── Main feed ── -->
     {#if loading}
         <div class="flex justify-center py-12">
             <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -80,7 +111,7 @@
                 <EventCard {event} />
             {/each}
         </div>
-        
+
         {#if loadingMore}
             <div class="flex justify-center py-6">
                 <svg class="animate-spin h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -89,7 +120,7 @@
                 </svg>
             </div>
         {/if}
-        
+
         {#if !hasNext && events.length > 0}
             <div class="py-8 text-center text-gray-500 text-sm">
                 You've reached the end of the feed.
