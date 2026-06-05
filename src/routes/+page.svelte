@@ -14,6 +14,7 @@
     let error = $state('');
 
     // Story viewer state
+    let storiesBarRef = $state<any>();
     let viewerOpen    = $state(false);
     let viewerStories = $state<any[]>([]);
     let viewerStart   = $state(0);
@@ -76,6 +77,7 @@
         stories={viewerStories}
         startIndex={viewerStart}
         onClose={closeStory}
+        onStoryViewed={(id) => storiesBarRef?.markRead(id)}
     />
 {/if}
 
@@ -83,7 +85,7 @@
 
     <!-- ── Stories bar (Today in History) ── -->
     <div class="bg-white border border-gray-200 rounded-lg mb-4 overflow-hidden">
-        <StoriesBar onStoryOpen={openStory} />
+        <StoriesBar bind:this={storiesBarRef} onStoryOpen={openStory} />
     </div>
 
     <!-- ── Main feed ── -->

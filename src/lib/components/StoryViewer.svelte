@@ -14,11 +14,13 @@
     let {
         stories,
         startIndex = 0,
-        onClose
+        onClose,
+        onStoryViewed
     }: {
         stories: Story[];
         startIndex?: number;
         onClose: () => void;
+        onStoryViewed?: (storyId: string) => void;
     } = $props();
 
     let currentIndex = $state(startIndex);
@@ -79,6 +81,12 @@
     });
 
     let story = $derived(stories[currentIndex]);
+
+    $effect(() => {
+        if (onStoryViewed && story) {
+            onStoryViewed(story.id);
+        }
+    });
 </script>
 
 <!-- Backdrop -->
