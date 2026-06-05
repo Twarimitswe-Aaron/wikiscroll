@@ -52,9 +52,9 @@
 <style>
     /* Card shell */
     .card {
-        background: #fff;
-        border: 1px solid #efefef;
-        border-radius: 8px;
+        background: #000000;
+        border: 1px solid #1c1c1c;
+        border-radius: 4px;
         overflow: hidden;
         margin-bottom: 24px;
     }
@@ -69,9 +69,9 @@
     .sk {
         background: linear-gradient(
             90deg,
-            #f0f0f0 25%,
-            #e8e8e8 50%,
-            #f0f0f0 75%
+            #121212 25%,
+            #262626 50%,
+            #121212 75%
         );
         background-size: 600px 100%;
         animation: shimmer 1.5s infinite linear;

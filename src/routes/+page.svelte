@@ -4,6 +4,7 @@
     import FeedSkeleton from '$lib/components/FeedSkeleton.svelte';
     import StoriesBar from '$lib/components/StoriesBar.svelte';
     import StoryViewer from '$lib/components/StoryViewer.svelte';
+    import DailyLearningPath from '$lib/components/DailyLearningPath.svelte';
     import { onMount } from 'svelte';
 
     let events = $state<any[]>([]);
@@ -81,43 +82,52 @@
     />
 {/if}
 
-<div class="max-w-[470px] mx-auto py-2">
+<div class="flex justify-center gap-10 max-w-[1000px] mx-auto py-2">
+    <!-- Left Column: Stories (Wider) & Main Feed (Narrower) -->
+    <div class="w-full max-w-[630px] shrink-0 flex flex-col items-center">
+        <!-- ── Stories bar (Today in History) ── -->
+        <div class="w-full mb-6">
+            <StoriesBar bind:this={storiesBarRef} onStoryOpen={openStory} />
+        </div>
 
-    <!-- ── Stories bar (Today in History) ── -->
-    <div class="bg-white border border-gray-200 rounded-lg mb-4 overflow-hidden">
-        <StoriesBar bind:this={storiesBarRef} onStoryOpen={openStory} />
+        <!-- ── Main feed (Centered & Constrained to 470px) ── -->
+        <div class="w-full max-w-[470px]">
+            {#if loading}
+                <FeedSkeleton count={4} />
+            {:else if error}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                    <p class="text-red-600 mb-4">{error}</p>
+                    <button onclick={() => loadFeed(false)} class="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">
+                        Try Again
+                    </button>
+                </div>
+            {:else if events.length === 0}
+                <div class="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-12 text-center">
+                    <h3 class="text-lg font-medium text-gray-900">No events found</h3>
+                    <p class="mt-1 text-gray-500">Check back later for more historical content.</p>
+                </div>
+            {:else}
+                <div class="space-y-4">
+                    {#each events as event (event.id || event.wikipediaPageId || Math.random())}
+                        <EventCard {event} />
+                    {/each}
+                </div>
+
+                {#if loadingMore}
+                    <FeedSkeleton count={1} />
+                {/if}
+
+                {#if !hasNext && events.length > 0}
+                    <div class="py-8 text-center text-gray-500 text-sm">
+                        You've reached the end of the feed.
+                    </div>
+                {/if}
+            {/if}
+        </div>
     </div>
 
-    <!-- ── Main feed ── -->
-    {#if loading}
-        <FeedSkeleton count={4} />
-    {:else if error}
-        <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <p class="text-red-600 mb-4">{error}</p>
-            <button onclick={() => loadFeed(false)} class="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">
-                Try Again
-            </button>
-        </div>
-    {:else if events.length === 0}
-        <div class="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-12 text-center">
-            <h3 class="text-lg font-medium text-gray-900">No events found</h3>
-            <p class="mt-1 text-gray-500">Check back later for more historical content.</p>
-        </div>
-    {:else}
-        <div class="space-y-4">
-            {#each events as event (event.id || event.wikipediaPageId || Math.random())}
-                <EventCard {event} />
-            {/each}
-        </div>
-
-        {#if loadingMore}
-            <FeedSkeleton count={1} />
-        {/if}
-
-        {#if !hasNext && events.length > 0}
-            <div class="py-8 text-center text-gray-500 text-sm">
-                You've reached the end of the feed.
-            </div>
-        {/if}
-    {/if}
+    <!-- Right Column: Sidebar (Daily Learning Path) -->
+    <aside class="hidden lg:block w-[320px] shrink-0 sticky top-8 h-fit">
+        <DailyLearningPath />
+    </aside>
 </div>
