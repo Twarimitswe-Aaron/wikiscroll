@@ -2,7 +2,6 @@
     import { api } from '$lib/api/client';
     import { onMount } from 'svelte';
     import { authStore } from '$lib/stores/auth';
-    import { resolve } from '$app/paths';
 
     interface Category {
         id: string;
@@ -118,11 +117,53 @@
         }
     }
 
+    // ── Local Storage Helpers for Reels Interactions ──
+    const LIKED_REELS_KEY = 'wik_liked_reels';
+    const BOOKMARKED_REELS_KEY = 'wik_bookmarked_reels';
+
+    function getPersistedSet(key: string): Set<string> {
+        if (typeof window === 'undefined') return new Set();
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? new Set(JSON.parse(raw)) : new Set();
+        } catch { return new Set(); }
+    }
+
+    function savePersistedSet(key: string, set: Set<string>) {
+        if (typeof window === 'undefined') return;
+        try {
+            localStorage.setItem(key, JSON.stringify([...set]));
+        } catch (err) {
+            console.warn('Could not save reels state:', err);
+        }
+    }
+
+    function initializeReelStates(videoList: ReelVideo[]) {
+        const likedSet = getPersistedSet(LIKED_REELS_KEY);
+        const bookmarkedSet = getPersistedSet(BOOKMARKED_REELS_KEY);
+        return videoList.map(v => {
+            // Adjust count if it was previously liked/bookmarked but not reflected in the mock count
+            let likes = v.likesCount;
+            let bookmarks = v.bookmarksCount;
+            const liked = likedSet.has(v.url);
+            const bookmarked = bookmarkedSet.has(v.url);
+            if (liked && !v.liked) likes++;
+            if (bookmarked && !v.bookmarked) bookmarks++;
+            return {
+                ...v,
+                liked,
+                bookmarked,
+                likesCount: likes,
+                bookmarksCount: bookmarks
+            };
+        });
+    }
+
     // Dynamic Video Search from Wikimedia Commons
     async function handleVideoSearch(keyword: string = '') {
         const query = keyword.trim() || searchQuery.trim();
         if (!query) {
-            videos = [...fallbackVideos];
+            videos = initializeReelStates([...fallbackVideos]);
             activeIndex = 0;
             return;
         }
@@ -155,16 +196,16 @@
 
                 if (fetched.length > 0) {
                     const uniqueFetched = fetched.filter(fv => !fallbackVideos.some(fb => fb.url === fv.url));
-                    videos = [...fallbackVideos, ...uniqueFetched];
+                    videos = initializeReelStates([...fallbackVideos, ...uniqueFetched]);
                 } else {
-                    videos = [...fallbackVideos];
+                    videos = initializeReelStates([...fallbackVideos]);
                 }
             } else {
-                videos = [...fallbackVideos];
+                videos = initializeReelStates([...fallbackVideos]);
             }
         } catch (err) {
             console.error('Failed Wikimedia search:', err);
-            videos = [...fallbackVideos];
+            videos = initializeReelStates([...fallbackVideos]);
         } finally {
             loadingVideos = false;
             activeIndex = 0;
@@ -191,24 +232,34 @@
 
     function handleLike() {
         if (!activeVideo) return;
+        const likedSet = getPersistedSet(LIKED_REELS_KEY);
+        
         if (activeVideo.liked) {
             activeVideo.liked = false;
             activeVideo.likesCount--;
+            likedSet.delete(activeVideo.url);
         } else {
             activeVideo.liked = true;
             activeVideo.likesCount++;
+            likedSet.add(activeVideo.url);
         }
+        savePersistedSet(LIKED_REELS_KEY, likedSet);
     }
 
     function handleBookmark() {
         if (!activeVideo) return;
+        const bookmarkedSet = getPersistedSet(BOOKMARKED_REELS_KEY);
+        
         if (activeVideo.bookmarked) {
             activeVideo.bookmarked = false;
             activeVideo.bookmarksCount--;
+            bookmarkedSet.delete(activeVideo.url);
         } else {
             activeVideo.bookmarked = true;
             activeVideo.bookmarksCount++;
+            bookmarkedSet.add(activeVideo.url);
         }
+        savePersistedSet(BOOKMARKED_REELS_KEY, bookmarkedSet);
     }
 
     async function copyShareLink() {
@@ -241,6 +292,7 @@
     // Intersection Observer to Auto-Play/Pause active slide
     let observer: IntersectionObserver;
     onMount(() => {
+        videos = initializeReelStates(videos);
         loadCategories();
         
         // Auto-fetch initial videos on load
@@ -365,7 +417,7 @@
                     >
                         {#each videos as video, idx (video.url)}
                             <!-- svelte-ignore a11y_click_events_have_key_events -->
-                            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
                             <div 
                                 class="reel-card snap-start w-full h-full relative bg-neutral-950 flex items-center justify-center cursor-pointer"
                                 data-index={idx}
@@ -397,9 +449,9 @@
                                 {/if}
 
                                 <!-- Bottom Info Card (Inside Video) -->
-                                <div class="absolute inset-x-0 bottom-0 z-15 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 flex flex-col justify-end pointer-events-none">
+                                <div class="absolute inset-x-0 bottom-0 z-15 bg-linear-to-t from-black/90 via-black/40 to-transparent p-4 flex flex-col justify-end pointer-events-none">
                                     <div class="flex items-center gap-2 mb-1.5">
-                                        <div class="h-6 w-6 rounded-full bg-gradient-to-tr from-pink-500 to-yellow-500 p-[1.2px]">
+                                        <div class="h-6 w-6 rounded-full bg-linear-to-tr from-pink-500 to-yellow-500 p-[1.2px]">
                                             <div class="h-full w-full rounded-full bg-black flex items-center justify-center text-[9px] font-bold text-white font-serif">
                                                 W
                                             </div>
@@ -527,11 +579,9 @@
 
                     <!-- External Source link -->
                     {#if activeVideo}
-                        <a
-                            href={activeVideo.commonsUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="flex flex-col items-center group no-underline"
+                        <button
+                            onclick={() => window.open(activeVideo?.commonsUrl, '_blank', 'noopener,noreferrer')}
+                            class="flex flex-col items-center group bg-transparent border-0 p-0 cursor-pointer"
                             aria-label="Wikimedia Source Page"
                         >
                             <div class="bg-neutral-900 hover:bg-neutral-800 p-2.5 rounded-full border border-neutral-800 text-white transition-all duration-200 group-hover:scale-110 flex items-center justify-center shadow-lg">
@@ -540,7 +590,7 @@
                                 </svg>
                             </div>
                             <span class="text-[8px] text-neutral-400 font-bold mt-1 uppercase tracking-wider">Source</span>
-                        </a>
+                        </button>
                     {/if}
                 </div>
 
@@ -600,7 +650,7 @@
             </div>
         {:else}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {#each categories as category, i (category.id)}
+                {#each categories as category (category.id)}
                     <div class="bg-neutral-950 rounded-xl border border-neutral-800 p-5 hover:border-neutral-700 transition-all flex flex-col items-center text-center">
                         <div class="h-12 w-12 bg-neutral-900 rounded-full border border-neutral-800 flex items-center justify-center mb-3 text-neutral-400">
                             {#if category.iconUrl}
