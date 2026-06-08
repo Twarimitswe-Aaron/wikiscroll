@@ -106,7 +106,7 @@
     });
 </script>
 
-<div class="flex items-center gap-4 py-2 px-1 overflow-x-auto min-h-[100px] bg-transparent border-b-0 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+<div class="flex items-center gap-4 py-2 px-1 overflow-x-auto min-h-[100px] bg-transparent border-b-0 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" style="-webkit-overflow-scrolling: touch;">
     {#if loading}
         <!-- Skeleton shimmer -->
         {#each Array(5) as _, i (i)}
