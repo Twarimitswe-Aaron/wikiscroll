@@ -2,12 +2,19 @@
     import { api } from '$lib/api/client';
     import EventCard from '$lib/components/EventCard.svelte';
     import { onMount } from 'svelte';
+    import { page } from '$app/stores';
     
-    let query = $state('');
-    let events = $state<any[]>([]);
+    let query = $state($page.url.searchParams.get('q') || '');
+    let events = $state<Record<string, unknown>[]>([]);
     let loading = $state(false);
     let error = $state('');
     let searched = $state(false);
+
+    onMount(() => {
+        if (query.trim()) {
+            handleSearch();
+        }
+    });
 
     async function handleSearch() {
         if (!query.trim()) return;
@@ -17,7 +24,7 @@
         searched = true;
 
         try {
-            const response = await api.get<{ content: any[] }>(`/events/search?query=${encodeURIComponent(query)}&page=0&size=20`, { requireAuth: false });
+            const response = await api.get<{ content: Record<string, unknown>[] }>(`/events/search?query=${encodeURIComponent(query)}&page=0&size=20`, { requireAuth: false });
             events = response.content || [];
         } catch (err: unknown) {
             error = (err as Error).message || 'Failed to search events';

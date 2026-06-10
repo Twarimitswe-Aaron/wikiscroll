@@ -2,6 +2,7 @@
     import { authStore } from '$lib/stores/auth';
     import { onMount } from 'svelte';
     import { resolve } from '$app/paths';
+    import { goto } from '$app/navigation';
 
     let user = $derived($authStore.user);
     let isAuthenticated = $derived($authStore.isAuthenticated);
@@ -53,7 +54,7 @@
     let items = $state<PathItem[]>(getDailyItems());
 
     function handleLearnClick(query: string) {
-        window.location.href = `/search?q=${encodeURIComponent(query)}`;
+        goto(`${resolve('/search' as '/login')}?q=${encodeURIComponent(query)}`);
     }
 
     function handleLogout() {
