@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 
-interface User {
+export interface User {
     id: string;
     email: string;
     username: string;
@@ -27,7 +27,7 @@ function createAuthStore() {
         if (userStr) {
             try {
                 initialUser = JSON.parse(userStr);
-            } catch (e) {
+            } catch {
                 console.error('Failed to parse user from local storage');
             }
         }

@@ -1,5 +1,7 @@
 <script lang="ts">
     import { api } from '$lib/api/client';
+    import AuthLayout from '$lib/components/AuthLayout.svelte';
+    import { resolve } from '$app/paths';
     
     let username = $state('');
     let email = $state('');
@@ -43,65 +45,74 @@
     }
 </script>
 
-<div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
-        <div>
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Create an account
-            </h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Already have an account?
-                <a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
-                    Sign in here
-                </a>
+<AuthLayout>
+    <!-- Main Form Box -->
+    <div class="bg-black border border-neutral-800 rounded-[1px] p-10 mb-2.5">
+        <div class="flex flex-col items-center mb-6">
+            <!-- App Logo/Name styled similar to Instagram script -->
+            <h1 class="font-serif text-4xl font-extrabold text-neutral-100 tracking-tight mb-4">WikHistory</h1>
+            <p class="text-[17px] font-semibold text-neutral-400 text-center leading-5">
+                Sign up to see historical events and interact with the past.
             </p>
         </div>
         
-        <form class="mt-8 space-y-6" onsubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+        <!-- OR Divider -->
+        <div class="flex items-center my-4 pb-2">
+            <div class="flex-1 h-px bg-neutral-800"></div>
+            <span class="px-4 text-[13px] font-bold text-neutral-500 uppercase">or</span>
+            <div class="flex-1 h-px bg-neutral-800"></div>
+        </div>
+
+        <form class="space-y-2" onsubmit={(e) => { e.preventDefault(); handleRegister(); }}>
             {#if error}
-                <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
-                    <p class="text-sm text-red-700">{error}</p>
-                </div>
+                <div class="text-sm text-red-500 text-center mb-4">{error}</div>
             {/if}
 
             {#if successMessage}
-                <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-md">
-                    <p class="text-sm text-green-700">{successMessage}</p>
-                </div>
+                <div class="text-sm text-green-600 text-center mb-4">{successMessage}</div>
             {/if}
 
-            <div class="rounded-md shadow-sm space-y-4">
-                <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                    <input id="username" name="username" type="text" required bind:value={username}
-                        class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="coolhistorian">
-                </div>
-                <div>
-                    <label for="email-address" class="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-                    <input id="email-address" name="email" type="email" autocomplete="email" required bind:value={email}
-                        class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="you@example.com">
-                </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input id="password" name="password" type="password" autocomplete="new-password" required bind:value={password}
-                        class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Minimum 5 characters">
-                </div>
+            <div class="relative">
+                <input id="email-address" name="email" type="email" autocomplete="email" required bind:value={email}
+                    class="block w-full px-2 pt-3.5 pb-1.5 text-xs bg-neutral-900 border border-neutral-800 rounded-sm focus:outline-none focus:border-neutral-600 focus:ring-0 text-neutral-100 peer placeholder-transparent" placeholder="Email">
+                <label for="email-address" class="absolute left-2.5 top-1 text-[10px] text-neutral-500 transition-all peer-placeholder-shown:text-xs peer-placeholder-shown:top-2.5 peer-focus:text-[10px] peer-focus:top-1 pointer-events-none">Email</label>
             </div>
 
-            <div>
-                <button type="submit" disabled={loading}
-                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed">
-                    {#if loading}
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Creating account...
-                    {:else}
-                        Create Account
-                    {/if}
-                </button>
+            <div class="relative">
+                <input id="username" name="username" type="text" required bind:value={username}
+                    class="block w-full px-2 pt-3.5 pb-1.5 text-xs bg-neutral-900 border border-neutral-800 rounded-sm focus:outline-none focus:border-neutral-600 focus:ring-0 text-neutral-100 peer placeholder-transparent" placeholder="Username">
+                <label for="username" class="absolute left-2.5 top-1 text-[10px] text-neutral-500 transition-all peer-placeholder-shown:text-xs peer-placeholder-shown:top-2.5 peer-focus:text-[10px] peer-focus:top-1 pointer-events-none">Username</label>
             </div>
+            
+            <div class="relative">
+                <input id="password" name="password" type="password" autocomplete="new-password" required bind:value={password}
+                    class="block w-full px-2 pt-3.5 pb-1.5 text-xs bg-neutral-900 border border-neutral-800 rounded-sm focus:outline-none focus:border-neutral-600 focus:ring-0 text-neutral-100 peer placeholder-transparent" placeholder="Password">
+                <label for="password" class="absolute left-2.5 top-1 text-[10px] text-neutral-500 transition-all peer-placeholder-shown:text-xs peer-placeholder-shown:top-2.5 peer-focus:text-[10px] peer-focus:top-1 pointer-events-none">Password</label>
+            </div>
+
+            <p class="text-xs text-neutral-400 text-center my-4 leading-4">
+                People who use our service may have uploaded your contact information to WikHistory.
+            </p>
+
+            <button type="submit" disabled={loading}
+                class="w-full mt-2 py-1.5 border border-transparent text-sm font-semibold rounded-lg text-white bg-[#0095f6] hover:bg-[#1877f2] focus:outline-none transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center">
+                {#if loading}
+                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                {:else}
+                    Sign up
+                {/if}
+            </button>
         </form>
     </div>
-</div>
+
+    <!-- Secondary Log in Box -->
+    <div class="bg-black border border-neutral-800 rounded-[1px] py-5 text-center flex justify-center gap-1.5 items-center">
+        <span class="text-sm text-neutral-100">Have an account?</span>
+        <a href={resolve('/login' as const)} class="text-sm font-semibold text-[#0095f6] hover:text-[#1877f2] transition-colors">
+            Log in
+        </a>
+    </div>
+</AuthLayout>

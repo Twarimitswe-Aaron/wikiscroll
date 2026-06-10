@@ -8,6 +8,8 @@
 
     let isAuthenticated = $derived($authStore.isAuthenticated);
     let user = $derived($authStore.user);
+    
+    let isAuthPage = $derived($page.url.pathname === '/login' || $page.url.pathname === '/register' || $page.url.pathname === '/forgot-password' || $page.url.pathname === '/reset-password');
 
     function handleLogout() {
         authStore.logout();
@@ -16,7 +18,8 @@
 </script>
 
 <div class="min-h-screen bg-black flex flex-col md:flex-row font-sans text-neutral-100">
-    <!-- ── Left Sidebar (Desktop/Tablet) ── -->
+    {#if !isAuthPage}
+        <!-- ── Left Sidebar (Desktop/Tablet) ── -->
     <aside class="hidden md:flex flex-col w-[72px] xl:w-60 fixed inset-y-0 left-0 bg-black border-r border-neutral-800 px-3 py-6 z-40 justify-between transition-all duration-300">
         <div class="flex flex-col gap-8">
             <!-- Brand Logo / Glyph -->
@@ -157,9 +160,10 @@
             {/if}
         </a>
     </nav>
+    {/if}
 
     <!-- ── Main Content Container ── -->
-    <main class="grow md:pl-[72px] xl:pl-60 w-full min-h-screen flex flex-col pb-20 md:pb-8">
+    <main class="grow {isAuthPage ? '' : 'md:pl-[72px] xl:pl-60'} w-full min-h-screen flex flex-col {isAuthPage ? 'pb-0' : 'pb-20 md:pb-8'}">
         <div class="grow max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
             {@render children()}
         </div>
