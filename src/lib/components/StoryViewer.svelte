@@ -23,6 +23,7 @@
         onStoryViewed?: (storyId: string) => void;
     } = $props();
 
+    // svelte-ignore state_referenced_locally
     let currentIndex = $state(startIndex);
     let progressPct  = $state(0);
     let paused       = $state(false);
@@ -91,8 +92,9 @@
 
 <!-- Backdrop -->
 <div
-    class="fixed inset-0 bg-black/75 z-[900]"
+    class="fixed inset-0 bg-black/75 z-900"
     onclick={onClose}
+    onkeydown={(e) => e.key === 'Enter' && onClose()}
     role="button"
     aria-label="Close story viewer"
     tabindex="-1"
@@ -100,15 +102,16 @@
 
 <!-- Story card -->
 <div
-    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(420px,100vw)] h-[min(740px,96vh)] rounded-2xl overflow-hidden z-[901] flex flex-col bg-[#0f0f0f] shadow-[0_24px_80px_rgba(0,0,0,0.7)] select-none"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(420px,100vw)] h-[min(740px,96vh)] rounded-2xl overflow-hidden z-901 flex flex-col bg-[#0f0f0f] shadow-[0_24px_80px_rgba(0,0,0,0.7)] select-none"
+    role="presentation"
     onpointerdown={() => (paused = true)}
     onpointerup={() => (paused = false)}
     onpointerleave={() => (paused = false)}
 >
     <!-- Progress bars -->
     <div class="absolute top-2.5 left-2.5 right-2.5 flex gap-[3px] z-10">
-        {#each stories as _, i}
-            <div class="flex-1 h-[2.5px] bg-white/35 rounded-[2px] overflow-hidden">
+        {#each stories as s, i (s.id)}
+            <div class="flex-1 h-[2.5px] bg-white/35 rounded-[2px] overflow-hidden" data-story-id={s.id}>
                 <div
                     class="h-full bg-white rounded-[2px] transition-[width] duration-[0.05s] linear"
                     style:width={
@@ -143,12 +146,12 @@
         {#if story?.imageUrl}
             <img src={story.imageUrl} alt={story.title} class="w-full h-full object-cover block" decoding="async" />
         {:else}
-            <div class="w-full h-full object-cover bg-gradient-to-br from-indigo-950 to-indigo-600 flex items-center justify-center">
+            <div class="w-full h-full object-cover bg-linear-to-br from-indigo-950 to-indigo-600 flex items-center justify-center">
                 <span class="text-[6rem] font-black text-white/15 font-serif">{story?.title?.charAt(0) ?? '?'}</span>
             </div>
         {/if}
         <!-- Gradient overlay -->
-        <div class="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent via-[50%] to-black/88"></div>
+        <div class="absolute inset-0 bg-linear-to-b from-black/15 via-transparent via-50% to-black/88"></div>
     </div>
 
     <!-- Text content -->
@@ -157,7 +160,7 @@
         <p class="text-white/85 text-xs leading-relaxed mb-3 line-clamp-4 font-sans">{story?.extract ?? ''}</p>
         {#if story?.wikipediaUrl}
             <a
-                href={story.wikipediaUrl}
+                {...{href: story.wikipediaUrl}}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-block text-sky-300 text-[11px] font-semibold no-underline tracking-wide transition-colors duration-150 hover:text-sky-200"
@@ -169,18 +172,19 @@
     </div>
 
     <!-- Tap zones: left = prev, right = next -->
-    <button class="absolute top-0 bottom-0 w-[40%] bg-transparent border-0 cursor-pointer z-[9] left-0" onclick={prev} aria-label="Previous story"></button>
-    <button class="absolute top-0 bottom-0 w-[40%] bg-transparent border-0 cursor-pointer z-[9] right-0" onclick={next} aria-label="Next story"></button>
+    <button class="absolute top-0 bottom-0 w-[40%] bg-transparent border-0 cursor-pointer z-9 left-0" onclick={prev} aria-label="Previous story"></button>
+    <button class="absolute top-0 bottom-0 w-[40%] bg-transparent border-0 cursor-pointer z-9 right-0" onclick={next} aria-label="Next story"></button>
 
     <!-- Dot nav -->
     <div class="absolute bottom-3.5 left-0 right-0 flex justify-center gap-1.25 z-10">
-        {#each stories as _, i}
+        {#each stories as s, i (s.id)}
             <button
                 class="w-1.5 h-1.5 rounded-full bg-white/35 border-0 p-0 cursor-pointer transition-all duration-200"
                 class:!bg-white={i === currentIndex}
                 class:scale-125={i === currentIndex}
                 onclick={() => jumpTo(i)}
                 aria-label={`Story ${i + 1}`}
+                data-story-id={s.id}
             ></button>
         {/each}
     </div>

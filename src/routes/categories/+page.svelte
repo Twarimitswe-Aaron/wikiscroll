@@ -31,6 +31,7 @@
             mime: string;
             mediatype: string;
             descriptionurl?: string;
+            size?: number;
         }>;
     }
 
@@ -91,6 +92,9 @@
     let activeIndex = $state(0);
     let showPlayStateIndicator = $state<'play' | 'pause' | null>(null);
     let videoBuffering = $state<Record<string, boolean>>({});
+    let fetchOffset = $state(0);
+    let hasMoreVideos = $state(true);
+    let isAppending = $state(false);
 
     let isAuthenticated = $derived($authStore.isAuthenticated);
     let activeVideo = $derived(videos[activeIndex] || null);
@@ -161,16 +165,25 @@
     }
 
     // Dynamic Video Search from Wikimedia Commons
-    async function handleVideoSearch(keyword: string = '') {
+    async function handleVideoSearch(keyword: string = '', append: boolean = false) {
         const query = keyword.trim() || searchQuery.trim();
         if (!query) {
             videos = initializeReelStates([...fallbackVideos]);
             activeIndex = 0;
             return;
         }
-        loadingVideos = true;
+        
+        if (append) {
+            if (!hasMoreVideos || isAppending) return;
+            isAppending = true;
+        } else {
+            fetchOffset = 0;
+            hasMoreVideos = true;
+            loadingVideos = true;
+        }
+
         try {
-            const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}+filetype:video&gsrnamespace=6&prop=imageinfo&iiprop=url|mime|mediatype&format=json&origin=*&gsrlimit=10`;
+            const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}+filetype:video&gsrnamespace=6&prop=imageinfo&iiprop=url|mime|mediatype|size&format=json&origin=*&gsrlimit=30&gsroffset=${fetchOffset}`;
             const res = await fetch(url);
             if (!res.ok) throw new Error('Search failed');
             const data = await res.json();
@@ -178,7 +191,14 @@
             if (data.query && data.query.pages) {
                 const pages = Object.values(data.query.pages) as CommonsPage[];
                 const fetched = pages
-                    .filter(p => p.imageinfo && p.imageinfo[0] && p.imageinfo[0].url)
+                    .filter(p => {
+                        const info = p.imageinfo?.[0];
+                        if (!info || !info.url) return false;
+                        const mime = info.mime?.toLowerCase() || '';
+                        if (mime.includes('ogg')) return false;
+                        if (info.size && info.size > 40 * 1024 * 1024) return false;
+                        return true;
+                    })
                     .map(p => {
                         const info = p.imageinfo![0];
                         const rawTitle = p.title.replace('File:', '').replace(/\.[^/.]+$/, '');
@@ -196,20 +216,35 @@
                     });
 
                 if (fetched.length > 0) {
-                    const uniqueFetched = fetched.filter(fv => !fallbackVideos.some(fb => fb.url === fv.url));
-                    videos = initializeReelStates([...fallbackVideos, ...uniqueFetched]);
-                } else {
+                    const uniqueFetched = fetched.filter(fv => !fallbackVideos.some(fb => fb.url === fv.url) && (!append || !videos.some(v => v.url === fv.url)));
+                    if (append) {
+                        videos = [...videos, ...initializeReelStates(uniqueFetched)];
+                    } else {
+                        videos = initializeReelStates([...fallbackVideos, ...uniqueFetched]);
+                    }
+                } else if (!append) {
                     videos = initializeReelStates([...fallbackVideos]);
                 }
+
+                if (data.continue && data.continue.gsroffset) {
+                    fetchOffset = data.continue.gsroffset;
+                } else {
+                    hasMoreVideos = false;
+                }
             } else {
-                videos = initializeReelStates([...fallbackVideos]);
+                if (!append) videos = initializeReelStates([...fallbackVideos]);
+                hasMoreVideos = false;
             }
         } catch (err) {
             console.error('Failed Wikimedia search:', err);
-            videos = initializeReelStates([...fallbackVideos]);
+            if (!append) videos = initializeReelStates([...fallbackVideos]);
         } finally {
-            loadingVideos = false;
-            activeIndex = 0;
+            if (append) {
+                isAppending = false;
+            } else {
+                loadingVideos = false;
+                activeIndex = 0;
+            }
         }
     }
 
@@ -310,6 +345,11 @@
                         const newIndex = parseInt(indexAttr, 10);
                         if (newIndex >= 0 && newIndex < videos.length && newIndex !== activeIndex) {
                             activeIndex = newIndex;
+                            
+                            // Trigger infinite scroll prefetch when 3 videos away from the end
+                            if (activeIndex >= videos.length - 3 && hasMoreVideos && !loadingVideos && !isAppending) {
+                                handleVideoSearch('', true);
+                            }
                         }
                     }
                 } else {
@@ -334,6 +374,19 @@
                 const cards = document.querySelectorAll('.reel-card');
                 cards.forEach(card => observer.unobserve(card));
             };
+        }
+    });
+
+    // Also observe any new cards appended
+    $effect(() => {
+        if (activeTab === 'reels' && videos.length > 0 && !isAppending) {
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.reel-card:not([data-observed])');
+                cards.forEach(card => {
+                    observer.observe(card);
+                    card.setAttribute('data-observed', 'true');
+                });
+            }, 150);
         }
     });
 </script>
@@ -408,12 +461,18 @@
                 
                 <!-- Actions Column Skeleton -->
                 <div class="flex flex-col items-center gap-4 z-20">
-                    {#each Array(4) as _}
+                    {#each [1, 2, 3, 4] as i (i)}
                         <div class="flex flex-col items-center animate-pulse">
                             <div class="w-[42px] h-[42px] bg-neutral-900 rounded-full"></div>
                             <div class="h-2 w-6 bg-neutral-900 rounded-sm mt-1.5"></div>
                         </div>
                     {/each}
+                </div>
+
+                <!-- Navigation Chevrons Column Skeleton -->
+                <div class="flex flex-col gap-3 z-20">
+                    <div class="w-[42px] h-[42px] bg-neutral-900 rounded-full animate-pulse shadow-lg border border-neutral-800"></div>
+                    <div class="w-[42px] h-[42px] bg-neutral-900 rounded-full animate-pulse shadow-lg border border-neutral-800"></div>
                 </div>
             </div>
         {:else if videos.length === 0}
@@ -450,25 +509,15 @@
                                     loop
                                     playsinline
                                     muted={globalMuted}
-                                    onloadstart={() => videoBuffering[video.url] = true}
                                     onwaiting={() => videoBuffering[video.url] = true}
                                     onplaying={() => videoBuffering[video.url] = false}
                                     oncanplay={() => videoBuffering[video.url] = false}
+                                    onerror={() => videoBuffering[video.url] = false}
                                 ></video>
 
                                 <!-- Buffering Indicator Overlay -->
                                 {#if videoBuffering[video.url]}
-                                    <div class="absolute inset-0 z-20 bg-neutral-950 animate-pulse flex flex-col justify-end pointer-events-none rounded-2xl overflow-hidden">
-                                        <div class="bg-linear-to-t from-black/90 to-transparent p-4 w-full">
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <div class="h-6 w-6 rounded-full bg-neutral-800"></div>
-                                                <div class="h-3 w-24 bg-neutral-800 rounded-md"></div>
-                                            </div>
-                                            <div class="h-4 w-3/4 bg-neutral-800 rounded-md mb-2 mt-1"></div>
-                                            <div class="h-3 w-full bg-neutral-800 rounded-md mb-1.5 mt-2"></div>
-                                            <div class="h-3 w-5/6 bg-neutral-800 rounded-md mb-3"></div>
-                                            <div class="h-5 w-20 bg-neutral-800 rounded-full mt-1.5"></div>
-                                        </div>
+                                    <div class="absolute inset-0 z-0 bg-neutral-950 animate-pulse pointer-events-none rounded-2xl overflow-hidden">
                                     </div>
                                 {/if}
 
@@ -673,7 +722,7 @@
     {#if activeTab === 'categories'}
         {#if loadingCategories}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {#each Array(6) as _}
+                {#each [1, 2, 3, 4, 5, 6] as i (i)}
                     <div class="bg-neutral-950 rounded-xl border border-neutral-800 p-5 flex flex-col items-center text-center animate-pulse">
                         <div class="h-12 w-12 bg-neutral-900 rounded-full mb-3"></div>
                         <div class="h-4 w-24 bg-neutral-900 rounded-md mb-2.5"></div>
