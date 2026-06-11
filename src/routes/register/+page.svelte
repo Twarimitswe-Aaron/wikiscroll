@@ -50,7 +50,7 @@
     <div class="bg-black border border-neutral-800 rounded-[1px] p-10 mb-2.5">
         <div class="flex flex-col items-center mb-6">
             <!-- App Logo/Name styled similar to Instagram script -->
-            <h1 class="font-serif text-4xl font-extrabold text-neutral-100 tracking-tight mb-4">WikHistory</h1>
+            <h1 class="text-4xl font-bold font-serif tracking-tight bg-clip-text text-transparent bg-linear-to-r from-pink-500 via-red-500 to-yellow-500 mb-4">WikHistory</h1>
             <p class="text-[17px] font-semibold text-neutral-400 text-center leading-5">
                 Sign up to see historical events and interact with the past.
             </p>

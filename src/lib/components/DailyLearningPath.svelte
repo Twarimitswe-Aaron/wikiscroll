@@ -54,7 +54,7 @@
     let items = $state<PathItem[]>(getDailyItems());
 
     function handleLearnClick(query: string) {
-        goto(`${resolve('/search' as '/login')}?q=${encodeURIComponent(query)}`);
+        goto(resolve(`/search?q=${encodeURIComponent(query)}` as '/login'));
     }
 
     function handleLogout() {
