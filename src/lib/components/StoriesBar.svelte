@@ -104,6 +104,15 @@
         seenIds = loadSeen();
         fetch();
     });
+
+    $effect(() => {
+        if (allRead && !refreshing) {
+            const t = setTimeout(() => {
+                fetch(true);
+            }, 1500);
+            return () => clearTimeout(t);
+        }
+    });
 </script>
 
 <div class="flex items-center gap-4 py-2 px-1 overflow-x-auto min-h-[100px] bg-transparent border-b-0 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" style="-webkit-overflow-scrolling: touch;">
@@ -118,24 +127,14 @@
 
     {:else if allRead}
         <!-- All read — show refresh prompt -->
-        <div class="flex flex-col items-center gap-1.5 w-full py-1 px-3">
-            <span class="text-xs text-neutral-500 font-sans">You're all caught up!</span>
-            <button 
-                class="inline-flex items-center gap-1.5 bg-neutral-800 text-white border-0 rounded-lg py-1.5 px-3.5 text-[11px] font-semibold cursor-pointer font-sans transition-colors duration-150 hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-default" 
-                onclick={() => fetch(true)} 
-                disabled={refreshing}
-            >
-                {#if refreshing}
-                    <svg class="animate-spin w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                {:else}
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    <span>Load new</span>
-                {/if}
-            </button>
+        <div class="flex flex-col items-center justify-center gap-1.5 w-full py-1 px-3">
+            <span class="text-xs text-neutral-400 font-sans font-semibold">You're all caught up!</span>
+            <div class="flex items-center gap-2 mt-0.5">
+                <svg class="animate-spin w-3.5 h-3.5 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-[11px] text-neutral-500 font-medium font-sans">Checking for new stories...</span>
+            </div>
         </div>
 
     {:else if unread.length === 0 && allStories.length === 0}
