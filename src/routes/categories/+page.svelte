@@ -90,6 +90,7 @@
     let copySuccessId = $state<string | null>(null);
     let activeIndex = $state(0);
     let showPlayStateIndicator = $state<'play' | 'pause' | null>(null);
+    let videoBuffering = $state<Record<string, boolean>>({});
 
     let isAuthenticated = $derived($authStore.isAuthenticated);
     let activeVideo = $derived(videos[activeIndex] || null);
@@ -388,12 +389,32 @@
         </div>
 
         {#if loadingVideos}
-            <div class="flex flex-col items-center justify-center py-20 gap-3">
-                <svg class="animate-spin h-7 w-7 text-[#0095f6]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span class="text-xs text-neutral-400">Fetching historical clips...</span>
+            <div class="flex items-center justify-center gap-4 md:gap-6 max-w-[540px] mx-auto relative select-none">
+                <!-- Center Video Frame Skeleton -->
+                <div class="relative w-[310px] md:w-[350px] h-[72vh] max-h-[580px] rounded-2xl overflow-hidden border border-neutral-800 bg-black shadow-2xl animate-pulse">
+                    <div class="w-full h-full bg-neutral-950"></div>
+                    <!-- Bottom Info Card Skeleton -->
+                    <div class="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/90 to-transparent p-4 flex flex-col justify-end">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="h-6 w-6 rounded-full bg-neutral-800"></div>
+                            <div class="h-3 w-24 bg-neutral-800 rounded-md"></div>
+                        </div>
+                        <div class="h-4 w-3/4 bg-neutral-800 rounded-md mb-2 mt-1"></div>
+                        <div class="h-3 w-full bg-neutral-800 rounded-md mb-1.5 mt-2"></div>
+                        <div class="h-3 w-5/6 bg-neutral-800 rounded-md mb-3"></div>
+                        <div class="h-5 w-20 bg-neutral-800 rounded-full mt-1.5"></div>
+                    </div>
+                </div>
+                
+                <!-- Actions Column Skeleton -->
+                <div class="flex flex-col items-center gap-4 z-20">
+                    {#each Array(4) as _}
+                        <div class="flex flex-col items-center animate-pulse">
+                            <div class="w-[42px] h-[42px] bg-neutral-900 rounded-full"></div>
+                            <div class="h-2 w-6 bg-neutral-900 rounded-sm mt-1.5"></div>
+                        </div>
+                    {/each}
+                </div>
             </div>
         {:else if videos.length === 0}
             <div class="border border-neutral-800 bg-neutral-950 rounded-2xl p-12 text-center max-w-[450px] mx-auto">
@@ -429,7 +450,27 @@
                                     loop
                                     playsinline
                                     muted={globalMuted}
+                                    onloadstart={() => videoBuffering[video.url] = true}
+                                    onwaiting={() => videoBuffering[video.url] = true}
+                                    onplaying={() => videoBuffering[video.url] = false}
+                                    oncanplay={() => videoBuffering[video.url] = false}
                                 ></video>
+
+                                <!-- Buffering Indicator Overlay -->
+                                {#if videoBuffering[video.url]}
+                                    <div class="absolute inset-0 z-20 bg-neutral-950 animate-pulse flex flex-col justify-end pointer-events-none rounded-2xl overflow-hidden">
+                                        <div class="bg-linear-to-t from-black/90 to-transparent p-4 w-full">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="h-6 w-6 rounded-full bg-neutral-800"></div>
+                                                <div class="h-3 w-24 bg-neutral-800 rounded-md"></div>
+                                            </div>
+                                            <div class="h-4 w-3/4 bg-neutral-800 rounded-md mb-2 mt-1"></div>
+                                            <div class="h-3 w-full bg-neutral-800 rounded-md mb-1.5 mt-2"></div>
+                                            <div class="h-3 w-5/6 bg-neutral-800 rounded-md mb-3"></div>
+                                            <div class="h-5 w-20 bg-neutral-800 rounded-full mt-1.5"></div>
+                                        </div>
+                                    </div>
+                                {/if}
 
                                 <!-- Play/Pause State Indicator Icons (Overlay) -->
                                 {#if showPlayStateIndicator && activeIndex === idx}
@@ -631,11 +672,18 @@
     <!-- ── CATEGORIES TAB ── -->
     {#if activeTab === 'categories'}
         {#if loadingCategories}
-            <div class="flex justify-center py-20">
-                <svg class="animate-spin h-7 w-7 text-[#0095f6]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {#each Array(6) as _}
+                    <div class="bg-neutral-950 rounded-xl border border-neutral-800 p-5 flex flex-col items-center text-center animate-pulse">
+                        <div class="h-12 w-12 bg-neutral-900 rounded-full mb-3"></div>
+                        <div class="h-4 w-24 bg-neutral-900 rounded-md mb-2.5"></div>
+                        <div class="h-3 w-full bg-neutral-900 rounded-md mt-2 mb-1.5"></div>
+                        <div class="h-3 w-4/5 bg-neutral-900 rounded-md mb-6"></div>
+                        {#if isAuthenticated}
+                            <div class="w-full h-8 bg-neutral-900 rounded-lg mt-auto"></div>
+                        {/if}
+                    </div>
+                {/each}
             </div>
         {:else if categoriesError}
             <div class="border border-red-900 bg-red-950/30 rounded-xl p-6 text-center max-w-md mx-auto">

@@ -160,7 +160,7 @@
         <!-- Unread stories only -->
         {#each unread as story (story.id)}
             <button class="flex flex-col items-center gap-1.5 shrink-0 bg-transparent border-0 p-0 cursor-pointer select-none" onclick={() => open(story)}>
-                <div class="w-[78px] h-[78px] rounded-full p-[2.2px] bg-linear-to-tr from-yellow-500 via-pink-500 to-red-500 transition-transform duration-150 hover:scale-103 focus:scale-103">
+                <div class="w-[93px] h-[93px] rounded-full p-[2.2px] bg-linear-to-tr from-yellow-500 via-pink-500 to-red-500 transition-transform duration-150 hover:scale-103 focus:scale-103">
                     {#if story.thumbnailUrl}
                         <img src={story.thumbnailUrl} alt={story.title} class="w-full h-full rounded-full object-cover border-2 border-black bg-neutral-900 block" loading="lazy" />
                     {:else}

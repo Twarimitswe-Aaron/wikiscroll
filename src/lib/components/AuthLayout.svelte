@@ -29,12 +29,8 @@
 
 <div class="min-h-screen bg-black flex items-center justify-center p-4 overflow-hidden relative">
     <!-- Back to Feed Button -->
-    <a href={resolve('/')} class="absolute top-6 left-6 flex items-center gap-2 text-neutral-400 hover:text-white transition-colors z-50 group">
-        <svg class="w-6 h-6 transition-transform group-hover:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-        <span class="text-sm font-semibold hidden sm:inline">Back to Feed</span>
+    <a href={resolve('/')} class="absolute top-6 left-6 z-50">
+        <h1 class="text-4xl font-bold font-serif tracking-tight bg-clip-text text-transparent bg-linear-to-r from-pink-500 via-red-500 to-yellow-500">WikHistory</h1>
     </a>
     
     <!-- Main Container -->

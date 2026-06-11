@@ -37,10 +37,7 @@
 <AuthLayout>
     <!-- Main Form Box -->
     <div class="bg-black border border-neutral-800 rounded-[1px] p-10 mb-2.5">
-        <div class="flex justify-center mb-10">
-            <!-- App Logo/Name styled similar to Instagram script -->
-            <h1 class="text-4xl font-bold font-serif tracking-tight bg-clip-text text-transparent bg-linear-to-r from-pink-500 via-red-500 to-yellow-500">WikHistory</h1>
-        </div>
+
         
         <form class="space-y-3.5" onsubmit={(e) => { e.preventDefault(); handleLogin(); }}>
             {#if error}
