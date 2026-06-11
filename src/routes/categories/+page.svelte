@@ -216,7 +216,14 @@
                     });
 
                 if (fetched.length > 0) {
-                    const uniqueFetched = fetched.filter(fv => !fallbackVideos.some(fb => fb.url === fv.url) && (!append || !videos.some(v => v.url === fv.url)));
+                    let uniqueFetched = fetched.filter(fv => !fallbackVideos.some(fb => fb.url === fv.url) && (!append || !videos.some(v => v.url === fv.url)));
+                    
+                    // Shuffle to ensure variety
+                    for (let i = uniqueFetched.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [uniqueFetched[i], uniqueFetched[j]] = [uniqueFetched[j], uniqueFetched[i]];
+                    }
+
                     if (append) {
                         videos = [...videos, ...initializeReelStates(uniqueFetched)];
                     } else {
@@ -332,7 +339,13 @@
         loadCategories();
         
         // Auto-fetch initial videos on load
-        handleVideoSearch('history');
+        const initialQueries = [
+            'history', 'vintage', '1920s', '1930s', '1940s', '1950s',
+            'archive film', 'silent film', 'newsreel', 'apollo',
+            'world war documentary', 'industrial revolution', 'civil rights footage'
+        ];
+        const randomQuery = initialQueries[Math.floor(Math.random() * initialQueries.length)];
+        handleVideoSearch(randomQuery);
 
         observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
