@@ -141,7 +141,7 @@
     <!-- Image -->
     <div class="absolute inset-0">
         {#if story?.imageUrl}
-            <img src={story.imageUrl} alt={story.title} class="w-full h-full object-cover block" />
+            <img src={story.imageUrl} alt={story.title} class="w-full h-full object-cover block" decoding="async" />
         {:else}
             <div class="w-full h-full object-cover bg-gradient-to-br from-indigo-950 to-indigo-600 flex items-center justify-center">
                 <span class="text-[6rem] font-black text-white/15 font-serif">{story?.title?.charAt(0) ?? '?'}</span>

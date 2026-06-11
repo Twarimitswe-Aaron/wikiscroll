@@ -113,7 +113,7 @@
         {#each items as item (item.searchQuery)}
             <div class="flex items-center gap-4">
                 <div class="w-[52px] h-[52px] rounded-full overflow-hidden border-2 border-neutral-800 shrink-0 bg-neutral-900">
-                    <img src={item.imageUrl} alt={item.title} class="w-full h-full object-cover" />
+                    <img src={item.imageUrl} alt={item.title} class="w-full h-full object-cover" decoding="async" />
                 </div>
                 <div class="flex flex-col grow min-w-0">
                     <button class="text-sm font-semibold text-neutral-100 text-left bg-transparent border-0 p-0 cursor-pointer hover:underline" onclick={() => handleLearnClick(item.searchQuery)}>

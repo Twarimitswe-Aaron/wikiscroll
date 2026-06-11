@@ -162,7 +162,7 @@
             <button class="flex flex-col items-center gap-1.5 shrink-0 bg-transparent border-0 p-0 cursor-pointer select-none" onclick={() => open(story)}>
                 <div class="w-[93px] h-[93px] rounded-full p-[2.2px] bg-linear-to-tr from-yellow-500 via-pink-500 to-red-500 transition-transform duration-150 hover:scale-103 focus:scale-103">
                     {#if story.thumbnailUrl}
-                        <img src={story.thumbnailUrl} alt={story.title} class="w-full h-full rounded-full object-cover border-2 border-black bg-neutral-900 block" loading="lazy" />
+                        <img src={story.thumbnailUrl} alt={story.title} class="w-full h-full rounded-full object-cover border-2 border-black bg-neutral-900 block" decoding="async" />
                     {:else}
                         <div class="w-full h-full rounded-full flex items-center justify-center bg-linear-to-br from-neutral-800 to-neutral-900 border-2 border-black text-neutral-100 text-lg font-bold font-serif">
                             <span>{story.title.charAt(0)}</span>
